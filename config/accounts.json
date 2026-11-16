@@ -1,0 +1,30 @@
+{
+  "_note": "ig.username = ชื่อ IG (ระบบหา IG user id ให้เองจาก META_TOKEN) · youtube.refresh_secret = ชื่อ secret ที่เก็บ refresh token ของช่องนั้น",
+  "accounts": [
+    {
+      "key": "doopleon",
+      "name": "ดูเพลิน",
+      "ig": { "username": "code_d98" },
+      "youtube": null,
+      "slots": ["07:00", "11:45", "17:45"]
+    },
+    {
+      "key": "panicpal",
+      "name": "Panic Pal",
+      "ig": { "username": "panicpal.98" },
+      "youtube": { "refresh_secret": "YT_REFRESH_PANICPAL" }
+    },
+    {
+      "key": "velyn",
+      "name": "VELYN",
+      "ig": { "username": "velyn_music_label" },
+      "youtube": { "refresh_secret": "YT_REFRESH_VELYN" }
+    },
+    {
+      "key": "lokson",
+      "name": "โลกซ่อนเรื่อง",
+      "ig": null,
+      "youtube": { "refresh_secret": "YT_REFRESH_LOKSON" }
+    }
+  ]
+}

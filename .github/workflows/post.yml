@@ -1,0 +1,57 @@
+name: AutoPost
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"   # GitHub อาจช้ากว่าเวลาจริงได้ 5–15 นาทีช่วงคนใช้เยอะ
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "post = โพสต์ที่ถึงเวลา · check = ตรวจกุญแจ/บัญชี"
+        default: post
+        type: choice
+        options: [post, check]
+
+concurrency:
+  group: autopost
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -q requests
+      - name: Run
+        env:
+          SECRETS_JSON: ${{ toJSON(secrets) }}
+        run: |
+          if [ "${{ github.event.inputs.mode }}" = "check" ]; then
+            python scripts/post.py --check
+          else
+            python scripts/post.py
+          fi
+      - name: Save queue
+        if: always() && github.event.inputs.mode != 'check'
+        run: |
+          git config user.name "autopost-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- queue media && [ -z "$(git ls-files --deleted media)" ]; then echo "ไม่มีอะไรเปลี่ยน"; exit 0; fi
+          cp queue/queue.json /tmp/mine.json
+          for i in 1 2 3 4 5; do
+            git fetch -q origin main
+            git reset -q --hard origin/main
+            python scripts/merge_queue.py /tmp/mine.json
+            git add -A queue media
+            git diff --cached --quiet && exit 0
+            git commit -qm "AutoPost: อัปเดตคิว $(TZ=Asia/Bangkok date '+%d/%m %H:%M')"
+            git push -q origin HEAD:main && exit 0
+            sleep 5
+          done
+          exit 1

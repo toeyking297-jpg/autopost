@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>AutoPost</title>
+<meta name="theme-color" content="#111827">
+<style>
+  :root{--bg:#0f172a;--card:#1e293b;--line:#334155;--txt:#e2e8f0;--mut:#94a3b8;--acc:#22c55e;--warn:#f59e0b;--err:#ef4444;--blue:#38bdf8}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.5 system-ui,-apple-system,"Noto Sans Thai",sans-serif;padding:env(safe-area-inset-top) 0 40px}
+  header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;position:sticky;top:0;background:var(--bg);z-index:5;border-bottom:1px solid var(--line)}
+  h1{font-size:19px;margin:0} h2{font-size:16px;margin:22px 16px 8px;color:var(--mut);font-weight:600}
+  main{max-width:640px;margin:auto}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;margin:10px 12px;padding:14px}
+  label{display:block;font-size:13px;color:var(--mut);margin:12px 0 4px}
+  input,select,textarea{width:100%;background:#0b1220;color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:11px;font:inherit}
+  textarea{min-height:90px;resize:vertical}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .chk{display:flex;align-items:center;gap:6px;background:#0b1220;border:1px solid var(--line);border-radius:10px;padding:9px 12px}
+  .chk input{width:auto}
+  button{background:var(--acc);color:#052e16;border:0;border-radius:10px;padding:12px 16px;font:inherit;font-weight:700;cursor:pointer}
+  button.sec{background:#334155;color:var(--txt)} button.red{background:transparent;color:var(--err);border:1px solid var(--err);padding:6px 10px;font-weight:500}
+  button:disabled{opacity:.5}
+  .grow{flex:1}
+  .item{display:flex;gap:10px;align-items:flex-start}
+  .item .t{font-weight:700;font-size:15px}
+  .meta{color:var(--mut);font-size:13px}
+  .pill{display:inline-block;font-size:12px;border-radius:99px;padding:1px 9px;margin-right:4px;border:1px solid var(--line)}
+  .s-pending{color:var(--blue);border-color:var(--blue)} .s-retry{color:var(--warn);border-color:var(--warn)}
+  .s-done{color:var(--acc);border-color:var(--acc)} .s-error,.s-partial{color:var(--err);border-color:var(--err)}
+  .cap{white-space:pre-wrap;font-size:13px;margin-top:4px;max-height:3.2em;overflow:hidden}
+  a{color:var(--blue)}
+  #msg{position:fixed;left:12px;right:12px;bottom:16px;max-width:620px;margin:auto;background:#020617;border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:none;z-index:9}
+  .bar{height:6px;background:#0b1220;border-radius:9px;overflow:hidden;margin-top:8px;display:none} .bar i{display:block;height:100%;width:0;background:var(--acc);transition:width .3s}
+  .err{color:var(--err)} .ok{color:var(--acc)} .mut{color:var(--mut)}
+  #setup{display:none}
+</style>
+</head>
+<body>
+<header><h1>📮 AutoPost</h1><div class="row"><button class="sec" id="btnRefresh">รีเฟรช</button><button class="sec" id="btnSet">⚙︎</button></div></header>
+<main>
+
+<section id="setup" class="card">
+  <b>ตั้งค่าครั้งแรก</b>
+  <label>บัญชี GitHub</label><input id="owner" value="toeyking297-jpg" autocapitalize="off">
+  <label>ชื่อ repo</label><input id="repo" value="autopost" autocapitalize="off">
+  <label>GitHub token (Contents + Actions: อ่าน/เขียน) — เก็บไว้ในมือถือเครื่องนี้เท่านั้น</label><input id="token" type="password" autocapitalize="off">
+  <div class="row" style="margin-top:12px"><button id="btnSave">บันทึก</button><button class="sec" id="btnCheck">ตรวจกุญแจ/บัญชี</button></div>
+  <p class="meta" id="runInfo"></p>
+</section>
+
+<h2>➕ เพิ่มโพสต์</h2>
+<section class="card">
+  <label>บัญชี</label><select id="acc"></select>
+  <label>โพสต์ที่</label><div class="row" id="plats"></div>
+  <label>ไฟล์วิดีโอ (mp4 แนวตั้ง ไม่เกิน 70 MB)</label><input id="file" type="file" accept="video/mp4,video/*">
+  <label>หัวข้อ (ใช้กับ YouTube)</label><input id="title" maxlength="100">
+  <label>แคปชัน</label><textarea id="caption"></textarea>
+  <label>แฮชแท็ก <span id="tagCount" class="mut"></span></label><input id="tags" placeholder="#ตลก #การ์ตูน #ดูเพลิน #ขำ #reels" autocapitalize="off">
+  <label>เวลาโพสต์ (เวลาไทย)</label><input id="when" type="datetime-local">
+  <div class="row" style="margin-top:14px"><button id="btnQueue" class="grow">เข้าคิว</button><button id="btnNow" class="sec">โพสต์ทันที</button></div>
+  <div class="bar" id="bar"><i></i></div>
+</section>
+
+<h2>⏳ รอโพสต์</h2><div id="upcoming"></div>
+<h2>✅ ล่าสุด</h2><div id="recent"></div>
+</main>
+<div id="msg"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const store = { get:(k,d)=>{try{return localStorage.getItem("ap_"+k)??d}catch(e){return d}}, set:(k,v)=>{try{localStorage.setItem("ap_"+k,v)}catch(e){}} };
+let cfg = { owner: store.get("owner","toeyking297-jpg"), repo: store.get("repo","autopost"), token: store.get("token","") };
+let ACC = [], Q = {items:[]}, QSHA = null;
+
+function toast(t, cls="", ms=4000){ const m=$("msg"); m.className=cls; m.innerHTML=t; m.style.display="block"; clearTimeout(m._t); if(ms) m._t=setTimeout(()=>m.style.display="none",ms); }
+const esc = s => String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const b64dec = s => new TextDecoder().decode(Uint8Array.from(atob(s.replace(/\n/g,"")),c=>c.charCodeAt(0)));
+const b64enc = str => { const b=new TextEncoder().encode(str); let s=""; for(let i=0;i<b.length;i+=0x8000) s+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000)); return btoa(s); };
+
+async function api(path, opts={}){
+  const r = await fetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}/${path}`, {...opts, headers:{Authorization:`Bearer ${cfg.token}`, Accept:"application/vnd.github+json", ...(opts.headers||{})}});
+  if(r.status===204) return {};
+  const j = await r.json().catch(()=>({}));
+  if(!r.ok){ const e=new Error(j.message||r.status); e.status=r.status; throw e; }
+  return j;
+}
+async function getJson(path){ const j = await api(`contents/${path}?t=${Date.now()}`); return {data: JSON.parse(b64dec(j.content)), sha: j.sha}; }
+
+async function load(){
+  if(!cfg.token){ $("setup").style.display="block"; return; }
+  try{
+    const [a,q] = await Promise.all([getJson("config/accounts.json"), getJson("queue/queue.json")]);
+    ACC = a.data.accounts; Q = q.data; QSHA = q.sha;
+    fillAccounts(); render(); lastRun();
+  }catch(e){ toast("โหลดไม่ได้: "+esc(e.message)+" — เช็ก token ในหน้าตั้งค่า","err",0); $("setup").style.display="block"; }
+}
+
+function fillAccounts(){
+  const cur = $("acc").value || store.get("lastAcc","");
+  $("acc").innerHTML = ACC.map(a=>`<option value="${a.key}">${esc(a.name)}</option>`).join("");
+  if(cur && ACC.some(a=>a.key===cur)) $("acc").value = cur;
+  fillPlats();
+}
+function fillPlats(){
+  const a = ACC.find(x=>x.key===$("acc").value); if(!a) return;
+  const p = [];
+  if(a.ig) p.push(`<label class="chk"><input type="checkbox" value="ig" checked> Instagram Reels (+ เพจ FB)</label>`);
+  if(a.youtube) p.push(`<label class="chk"><input type="checkbox" value="youtube" checked> YouTube Shorts</label>`);
+  $("plats").innerHTML = p.join("");
+  $("when").value = toLocalInput(nextSlot(a));
+}
+function bkkNow(){ return new Date(Date.now()+7*3600e3); } // ใช้ getUTC* เป็นเวลาไทย
+function toLocalInput(d){ return d.toISOString().slice(0,16); }
+function nextSlot(a){
+  const slots = (a.slots||[]).slice().sort(); const now = bkkNow();
+  const taken = new Set(Q.items.filter(i=>i.account===a.key && ["pending","retry"].includes(i.status)).map(i=>i.schedule_at.slice(0,16)));
+  if(!slots.length) return new Date(now.getTime()+10*60e3);
+  for(let d=0; d<30; d++) for(const s of slots){
+    const [h,m]=s.split(":").map(Number);
+    const t=new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate()+d,h,m));
+    if(t>now && !taken.has(toLocalInput(t))) return t;
+  }
+  return now;
+}
+function fmt(iso){ const d=new Date(iso); return d.toLocaleString("th-TH",{timeZone:"Asia/Bangkok",weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}); }
+const ST = {pending:"รอโพสต์",retry:"จะลองใหม่",done:"โพสต์แล้ว",partial:"ได้บางส่วน",error:"ไม่สำเร็จ"};
+const PN = {ig:"IG",youtube:"YouTube"};
+
+function card(i){
+  const a = ACC.find(x=>x.key===i.account); const res=i.results||{};
+  const plats = (i.platforms||[]).map(p=>{ const r=res[p]; if(r&&r.url) return `<a href="${esc(r.url)}" target="_blank">${PN[p]} ↗</a>`; if(r&&r.status==="error") return `<span class="err" title="${esc(r.error)}">${PN[p]} ✗</span>`; return `<span class="mut">${PN[p]}</span>`; }).join(" · ");
+  const errs = Object.entries(res).filter(([,r])=>r.status==="error").map(([p,r])=>`<div class="meta err">${PN[p]}: ${esc(r.error)}</div>`).join("") + (i.error?`<div class="meta err">${esc(i.error)}</div>`:"");
+  const canDel = ["pending","retry"].includes(i.status);
+  return `<div class="card item"><div class="grow">
+    <div class="t">${fmt(i.schedule_at)} · ${esc(a?a.name:i.account)}</div>
+    <div class="meta"><span class="pill s-${i.status}">${ST[i.status]||i.status}</span> ${plats}</div>
+    <div class="cap">${esc(i.title?i.title+"\n":"")}${esc(i.caption)}</div>${errs}</div>
+    ${canDel?`<div style="display:flex;flex-direction:column;gap:6px"><button class="sec" onclick="postNow('${i.id}')">ตอนนี้</button><button class="red" onclick="delItem('${i.id}')">ลบ</button></div>`:""}
+  </div>`;
+}
+function render(){
+  const up = Q.items.filter(i=>["pending","retry"].includes(i.status)).sort((a,b)=>a.schedule_at.localeCompare(b.schedule_at));
+  const rec = Q.items.filter(i=>!["pending","retry"].includes(i.status)).sort((a,b)=>b.schedule_at.localeCompare(a.schedule_at)).slice(0,20);
+  $("upcoming").innerHTML = up.map(card).join("") || `<p class="card mut">ยังไม่มีคิว</p>`;
+  $("recent").innerHTML = rec.map(card).join("") || `<p class="card mut">ยังไม่มี</p>`;
+}
+
+async function saveQueue(mutate, msg){
+  for(let n=0;n<5;n++){
+    const q = await getJson("queue/queue.json"); Q=q.data; QSHA=q.sha;
+    mutate(Q);
+    try{
+      await api("contents/queue/queue.json",{method:"PUT",body:JSON.stringify({message:msg,content:b64enc(JSON.stringify(Q,null,2)+"\n"),sha:QSHA})});
+      render(); return;
+    }catch(e){ if(e.status!==409 && e.status!==422) throw e; await new Promise(r=>setTimeout(r,1500)); }
+  }
+  throw new Error("บันทึกคิวไม่ได้ (มีคนแก้พร้อมกัน) ลองอีกครั้ง");
+}
+function readFileB64(f){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result.split(",")[1]); r.onerror=rej; r.readAsDataURL(f); }); }
+function tagsList(){ return $("tags").value.replace(/,/g," ").split(/\s+/).filter(Boolean).map(t=>t.startsWith("#")?t:"#"+t); }
+$("tags").oninput = ()=>{ const n=tagsList().length; $("tagCount").textContent=`(${n}/5)`; $("tagCount").className = n===5?"ok":"err"; };
+
+async function addPost(now){
+  const a = ACC.find(x=>x.key===$("acc").value); const f=$("file").files[0];
+  const plats = [...$("plats").querySelectorAll("input:checked")].map(x=>x.value);
+  if(!f) return toast("เลือกไฟล์วิดีโอก่อน","err");
+  if(f.size>70*1024*1024) return toast("ไฟล์ใหญ่เกิน 70 MB","err");
+  if(!plats.length) return toast("เลือกที่โพสต์อย่างน้อย 1 ที่","err");
+  const tags = tagsList();
+  if(tags.length!==5 && !confirm(`แฮชแท็กมี ${tags.length} อัน (ปกติใช้ 5) จะเข้าคิวต่อไหม?`)) return;
+  const when = now ? toLocalInput(bkkNow()) : $("when").value;
+  if(!when) return toast("ใส่เวลาโพสต์","err");
+  const id = when.replace(/[-:]/g,"").replace("T","-") + "-" + a.key + "-" + Math.random().toString(16).slice(2,6);
+  const btns=[$("btnQueue"),$("btnNow")]; btns.forEach(b=>b.disabled=true);
+  const bar=$("bar"); bar.style.display="block"; bar.firstChild.style.width="15%";
+  try{
+    toast("กำลังอัปโหลดวิดีโอ… (อย่าปิดหน้านี้)","",0);
+    const b64 = await readFileB64(f); bar.firstChild.style.width="35%";
+    await api(`contents/media/${id}.mp4`,{method:"PUT",body:JSON.stringify({message:`AutoPost: เพิ่มวิดีโอ ${id}`,content:b64})});
+    bar.firstChild.style.width="80%";
+    await saveQueue(q=>q.items.push({id,account:a.key,platforms:plats,video:`media/${id}.mp4`,caption:$("caption").value.trim(),hashtags:tags,title:$("title").value.trim(),schedule_at:when+"+07:00",status:"pending",created_at:new Date().toISOString()}), `AutoPost: เข้าคิว ${id}`);
+    bar.firstChild.style.width="100%"; store.set("lastAcc",a.key);
+    if(now) await dispatch("post");
+    toast(now?"ส่งโพสต์แล้ว รอประมาณ 1–5 นาที":`เข้าคิวแล้ว: ${fmt(when+"+07:00")}`,"ok");
+    $("file").value=""; $("caption").value=""; $("title").value=""; fillPlats();
+  }catch(e){ toast("ไม่สำเร็จ: "+esc(e.message),"err",0); }
+  finally{ btns.forEach(b=>b.disabled=false); setTimeout(()=>{bar.style.display="none";bar.firstChild.style.width="0"},1500); }
+}
+async function dispatch(mode){ await api("actions/workflows/post.yml/dispatches",{method:"POST",body:JSON.stringify({ref:"main",inputs:{mode}})}); }
+async function postNow(id){
+  try{ await saveQueue(q=>{const i=q.items.find(x=>x.id===id); if(i) i.schedule_at=toLocalInput(bkkNow())+"+07:00";},`AutoPost: โพสต์ทันที ${id}`); await dispatch("post"); toast("ส่งโพสต์แล้ว รอประมาณ 1–5 นาที","ok"); }
+  catch(e){ toast("ไม่สำเร็จ: "+esc(e.message),"err",0); }
+}
+async function delItem(id){
+  if(!confirm("ลบโพสต์นี้ออกจากคิว (และลบไฟล์วิดีโอ)?")) return;
+  try{
+    const it = Q.items.find(x=>x.id===id);
+    await saveQueue(q=>{q.items=q.items.filter(x=>x.id!==id)},`AutoPost: ลบ ${id}`);
+    if(it && it.video){ try{ const dir=await api(`contents/media?t=${Date.now()}`); const f=dir.find(x=>x.path===it.video); if(f) await api(`contents/${it.video}`,{method:"DELETE",body:JSON.stringify({message:`AutoPost: ลบวิดีโอ ${id}`,sha:f.sha})}); }catch(e){} }
+    toast("ลบแล้ว","ok");
+  }catch(e){ toast("ลบไม่ได้: "+esc(e.message),"err",0); }
+}
+async function lastRun(){
+  try{ const r=await api("actions/workflows/post.yml/runs?per_page=1"); const x=r.workflow_runs&&r.workflow_runs[0];
+    $("runInfo").innerHTML = x?`รอบล่าสุด: ${fmt(x.created_at)} · ${x.conclusion||x.status} · <a href="${x.html_url}" target="_blank">ดูรายละเอียด</a>`:"ยังไม่เคยรัน"; }catch(e){}
+}
+
+$("acc").onchange=fillPlats;
+$("btnQueue").onclick=()=>addPost(false);
+$("btnNow").onclick=()=>addPost(true);
+$("btnRefresh").onclick=load;
+$("btnSet").onclick=()=>{ const s=$("setup"); s.style.display=s.style.display==="block"?"none":"block"; lastRun(); };
+$("btnSave").onclick=()=>{ cfg={owner:$("owner").value.trim(),repo:$("repo").value.trim(),token:$("token").value.trim()}; Object.entries(cfg).forEach(([k,v])=>store.set(k,v)); $("setup").style.display="none"; load(); };
+$("btnCheck").onclick=async()=>{ try{ await dispatch("check"); toast("สั่งตรวจแล้ว รอ 1 นาทีแล้วกด 'ดูรายละเอียด'","ok"); setTimeout(lastRun,8000);}catch(e){toast("สั่งไม่ได้: "+esc(e.message),"err",0);} };
+$("owner").value=cfg.owner; $("repo").value=cfg.repo; $("token").value=cfg.token;
+load();
+</script>
+</body>
+</html>
