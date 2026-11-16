@@ -30,7 +30,12 @@ jobs:
       - run: pip install -q requests
       - name: Run
         env:
-          SECRETS_JSON: ${{ toJSON(secrets) }}
+          META_TOKEN: ${{ secrets.META_TOKEN }}
+          YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_PANICPAL: ${{ secrets.YT_REFRESH_PANICPAL }}
+          YT_REFRESH_VELYN: ${{ secrets.YT_REFRESH_VELYN }}
+          YT_REFRESH_LOKSON: ${{ secrets.YT_REFRESH_LOKSON }}
         run: |
           if [ "${{ github.event.inputs.mode }}" = "check" ]; then
             python scripts/post.py --check
