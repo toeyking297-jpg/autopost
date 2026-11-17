@@ -4,27 +4,45 @@
     {
       "key": "doopleon",
       "name": "ดูเพลิน",
-      "ig": { "username": "code_d98" },
+      "ig": {
+        "username": "code_d98"
+      },
       "youtube": null,
-      "slots": ["07:00", "11:45", "17:45"]
+      "slots": [
+        "07:00",
+        "11:45",
+        "17:45"
+      ],
+      "avatar": "avatars/doopleon.png"
     },
     {
       "key": "panicpal",
       "name": "Panic Pal",
-      "ig": { "username": "panicpal.98" },
-      "youtube": { "refresh_secret": "YT_REFRESH_PANICPAL" }
+      "ig": {
+        "username": "panicpal.98"
+      },
+      "youtube": {
+        "refresh_secret": "YT_REFRESH_PANICPAL"
+      },
+      "avatar": "avatars/panicpal.png"
     },
     {
       "key": "velyn",
       "name": "VELYN",
-      "ig": { "username": "velyn_music_label" },
-      "youtube": { "refresh_secret": "YT_REFRESH_VELYN" }
+      "ig": {
+        "username": "velyn_music_label"
+      },
+      "youtube": {
+        "refresh_secret": "YT_REFRESH_VELYN"
+      }
     },
     {
       "key": "lokson",
       "name": "โลกซ่อนเรื่อง",
       "ig": null,
-      "youtube": { "refresh_secret": "YT_REFRESH_LOKSON" }
+      "youtube": {
+        "refresh_secret": "YT_REFRESH_LOKSON"
+      }
     }
   ]
 }

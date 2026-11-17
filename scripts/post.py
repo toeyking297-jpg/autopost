@@ -92,7 +92,12 @@ def ig_user_ids() -> dict:
     return out
 
 
-def ig_post(account: dict, video: pathlib.Path, caption: str) -> str:
+def raw_url(path: str) -> str:
+    repo = os.environ.get("GITHUB_REPOSITORY", "toeyking297-jpg/autopost")
+    return f"https://raw.githubusercontent.com/{repo}/main/{path}"
+
+
+def ig_post(account: dict, video: pathlib.Path, caption: str, cover: dict | None = None) -> str:
     token = secret("META_TOKEN")
     username = account["ig"]["username"].lower()
     uid = account["ig"].get("user_id") or ig_user_ids().get(username)
@@ -100,9 +105,14 @@ def ig_post(account: dict, video: pathlib.Path, caption: str) -> str:
         raise ConfigError(f"META_TOKEN มองไม่เห็น IG @{username} (เพจต้องเชื่อม IG แบบธุรกิจ และให้สิทธิ์เพจนี้ตอนสร้าง token)")
 
     # 1) สร้าง container แบบอัปโหลดไฟล์ตรง (ไม่ต้องมีลิงก์สาธารณะ)
-    r = requests.post(f"{GRAPH}/{uid}/media", data={
-        "media_type": "REELS", "upload_type": "resumable", "caption": caption,
-        "share_to_feed": "true", "access_token": token}, timeout=60).json()
+    params = {"media_type": "REELS", "upload_type": "resumable", "caption": caption,
+              "share_to_feed": "true", "access_token": token}
+    if cover:
+        if cover.get("type") == "frame" and cover.get("offset_ms") is not None:
+            params["thumb_offset"] = str(int(cover["offset_ms"]))
+        elif cover.get("image") and (ROOT / cover["image"]).exists():
+            params["cover_url"] = raw_url(cover["image"])
+    r = requests.post(f"{GRAPH}/{uid}/media", data=params, timeout=60).json()
     if "id" not in r:
         raise PostError(f"IG สร้างโพสต์ไม่ได้: {r.get('error', r)}")
     cid = r["id"]
@@ -149,12 +159,14 @@ def yt_access_token(refresh_secret: str) -> str:
     return r["access_token"]
 
 
-def yt_post(account: dict, video: pathlib.Path, title: str, description: str, tags: list[str]) -> str:
+def yt_post(account: dict, video: pathlib.Path, title: str, description: str, tags: list[str],
+            ai: bool = False, cover: dict | None = None) -> str:
     token = yt_access_token(account["youtube"]["refresh_secret"])
     meta = {
         "snippet": {"title": title[:100], "description": description[:5000],
                     "tags": [t.lstrip("#") for t in tags][:15], "categoryId": "24"},
-        "status": {"privacyStatus": "public", "selfDeclaredMadeForKids": False},
+        "status": {"privacyStatus": "public", "selfDeclaredMadeForKids": False,
+                   "containsSyntheticMedia": bool(ai)},
     }
     size = video.stat().st_size
     init = requests.post(
@@ -170,6 +182,12 @@ def yt_post(account: dict, video: pathlib.Path, title: str, description: str, ta
     j = up.json() if up.content else {}
     if "id" not in j:
         raise PostError(f"YouTube อัปโหลดไม่ผ่าน: {j.get('error', up.text[:300])}")
+    if cover and cover.get("image") and (ROOT / cover["image"]).exists():
+        img = (ROOT / cover["image"]).read_bytes()
+        t = requests.post(f"https://www.googleapis.com/upload/youtube/v3/thumbnails/set?videoId={j['id']}",
+                          headers={"Authorization": f"Bearer {token}", "Content-Type": "image/jpeg"}, data=img, timeout=120)
+        if not t.ok:
+            log(f"   (ตั้งภาพปก YouTube ไม่ได้ — ช่องต้องยืนยันเบอร์โทรก่อน: {t.text[:150]})")
     return f"https://youtube.com/shorts/{j['id']}"
 
 
@@ -220,10 +238,10 @@ def process(item: dict, accounts: dict, dry: bool) -> bool:
         r["attempts"] += 1
         try:
             if plat == "ig":
-                url = ig_post(acc, video, caption)
+                url = ig_post(acc, video, caption, item.get("cover"))
             elif plat == "youtube":
                 title = item.get("title") or (item.get("caption") or "").split("\n")[0][:90] or acc["name"]
-                url = yt_post(acc, video, title, caption, item.get("hashtags", []))
+                url = yt_post(acc, video, title, caption, item.get("hashtags", []), item.get("ai", False), item.get("cover"))
             else:
                 raise PostError(f"ไม่รู้จักแพลตฟอร์ม {plat}")
             r.update(status="done", url=url, at=now().isoformat(timespec="seconds"))
@@ -250,8 +268,10 @@ def process(item: dict, accounts: dict, dry: bool) -> bool:
         item["status"] = "partial"
     else:
         item["status"] = "error"
-    if item["status"] in ("done", "partial", "error") and video.exists():
-        video.unlink()  # ลบไฟล์หลังโพสต์เสร็จ ไม่ให้ repo บวม
+    if item["status"] in ("done", "partial", "error"):
+        video.unlink(missing_ok=True)  # ลบไฟล์หลังโพสต์เสร็จ ไม่ให้ repo บวม
+        if (item.get("cover") or {}).get("image"):
+            (ROOT / item["cover"]["image"]).unlink(missing_ok=True)
         item["video_removed"] = True
     return True
 

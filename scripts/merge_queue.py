@@ -22,4 +22,6 @@ for item in q["items"]:
             item[f] = m[f]
     if m.get("video_removed"):
         (ROOT / item["video"]).unlink(missing_ok=True)
+        if (item.get("cover") or {}).get("image"):
+            (ROOT / item["cover"]["image"]).unlink(missing_ok=True)
 QUEUE.write_text(json.dumps(q, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

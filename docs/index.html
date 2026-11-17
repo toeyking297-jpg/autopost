@@ -2,82 +2,214 @@
 <html lang="th">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#000000">
 <title>AutoPost</title>
-<meta name="theme-color" content="#111827">
 <style>
-  :root{--bg:#0f172a;--card:#1e293b;--line:#334155;--txt:#e2e8f0;--mut:#94a3b8;--acc:#22c55e;--warn:#f59e0b;--err:#ef4444;--blue:#38bdf8}
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.5 system-ui,-apple-system,"Noto Sans Thai",sans-serif;padding:env(safe-area-inset-top) 0 40px}
-  header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;position:sticky;top:0;background:var(--bg);z-index:5;border-bottom:1px solid var(--line)}
-  h1{font-size:19px;margin:0} h2{font-size:16px;margin:22px 16px 8px;color:var(--mut);font-weight:600}
-  main{max-width:640px;margin:auto}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;margin:10px 12px;padding:14px}
-  label{display:block;font-size:13px;color:var(--mut);margin:12px 0 4px}
-  input,select,textarea{width:100%;background:#0b1220;color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:11px;font:inherit}
-  textarea{min-height:90px;resize:vertical}
-  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-  .chk{display:flex;align-items:center;gap:6px;background:#0b1220;border:1px solid var(--line);border-radius:10px;padding:9px 12px}
-  .chk input{width:auto}
-  button{background:var(--acc);color:#052e16;border:0;border-radius:10px;padding:12px 16px;font:inherit;font-weight:700;cursor:pointer}
-  button.sec{background:#334155;color:var(--txt)} button.red{background:transparent;color:var(--err);border:1px solid var(--err);padding:6px 10px;font-weight:500}
-  button:disabled{opacity:.5}
-  .grow{flex:1}
-  .item{display:flex;gap:10px;align-items:flex-start}
-  .item .t{font-weight:700;font-size:15px}
-  .meta{color:var(--mut);font-size:13px}
-  .pill{display:inline-block;font-size:12px;border-radius:99px;padding:1px 9px;margin-right:4px;border:1px solid var(--line)}
-  .s-pending{color:var(--blue);border-color:var(--blue)} .s-retry{color:var(--warn);border-color:var(--warn)}
-  .s-done{color:var(--acc);border-color:var(--acc)} .s-error,.s-partial{color:var(--err);border-color:var(--err)}
-  .cap{white-space:pre-wrap;font-size:13px;margin-top:4px;max-height:3.2em;overflow:hidden}
-  a{color:var(--blue)}
-  #msg{position:fixed;left:12px;right:12px;bottom:16px;max-width:620px;margin:auto;background:#020617;border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:none;z-index:9}
-  .bar{height:6px;background:#0b1220;border-radius:9px;overflow:hidden;margin-top:8px;display:none} .bar i{display:block;height:100%;width:0;background:var(--acc);transition:width .3s}
-  .err{color:var(--err)} .ok{color:var(--acc)} .mut{color:var(--mut)}
-  #setup{display:none}
+  :root{--bg:#000;--card:#1c1c1e;--card2:#2c2c2e;--line:#38383a;--txt:#fff;--mut:#8e8e93;--blue:#0a84ff;--green:#30d158;--red:#ff453a;--orange:#ff9f0a;--purple:#bf5af2}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg);color:var(--txt);font:17px/1.4 -apple-system,system-ui,"Noto Sans Thai",sans-serif}
+  body{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
+  .scr{display:none;max-width:640px;margin:auto}
+  .scr.on{display:block}
+  .nav{position:sticky;top:0;z-index:20;background:rgba(18,18,20,.88);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:.5px solid var(--line);padding:calc(env(safe-area-inset-top) + 8px) 16px 8px}
+  .nav .bar{display:flex;align-items:center;justify-content:center;position:relative;height:30px}
+  .nav .bar b{font-size:17px}
+  .nav .bar a{position:absolute;right:0;color:var(--blue);font-size:17px;cursor:pointer}
+  .nav h1{font-size:34px;margin:4px 0 2px;font-weight:800}
+  .sec{color:var(--mut);font-size:15px;margin:22px 16px 8px}
+  .group{background:var(--card);border-radius:14px;overflow:hidden;margin:0 16px}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 16px}
+  .stat{background:var(--card);border-radius:16px;padding:14px 16px}
+  .stat .ic{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:17px}
+  .stat .row{display:flex;justify-content:space-between;align-items:flex-end;margin-top:8px}
+  .stat .row span{color:var(--mut);font-size:16px}
+  .stat .row b{font-size:34px;line-height:1}
+  .runbar{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:14px;margin:0 16px;padding:13px 16px;font-size:15px;color:var(--mut)}
+  .dot{width:10px;height:10px;border-radius:50%;background:var(--mut);flex:none}
+  .runbar a{margin-left:auto;color:var(--blue);font-weight:600;cursor:pointer;white-space:nowrap}
+  .seg{display:flex;background:var(--card);border-radius:10px;margin:12px 16px;padding:2px}
+  .seg button{flex:1;background:none;border:0;color:var(--txt);font:inherit;font-size:15px;font-weight:600;padding:7px 4px;border-radius:8px}
+  .seg button.on{background:#636366}
+  .day{color:var(--mut);font-size:15px;margin:18px 16px 8px}
+  .it{display:flex;gap:12px;padding:12px 16px;cursor:pointer;position:relative}
+  .it+.it::before{content:"";position:absolute;top:0;left:76px;right:0;border-top:.5px solid var(--line)}
+  .av{width:48px;height:48px;border-radius:50%;flex:none;background:var(--card2);display:grid;place-items:center;font-weight:800;overflow:hidden}
+  .av img{width:100%;height:100%;object-fit:cover}
+  .it .body{flex:1;min-width:0}
+  .it .top{display:flex;justify-content:space-between;gap:8px}
+  .it .top b{font-size:17px}
+  .it .top span{color:var(--mut)}
+  .it .cap{color:var(--mut);font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chips{display:flex;gap:6px;margin-top:6px;align-items:center;flex-wrap:wrap}
+  .pf{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;font-size:13px;color:#fff;font-weight:800;flex:none}
+  .pf.ig{background:linear-gradient(45deg,#f9a825,#e1306c,#833ab4)} .pf.yt{background:#ff0000}
+  .pf.dim{opacity:.35}
+  .chip{font-size:13px;padding:3px 10px;border-radius:99px;background:var(--card2);color:var(--mut)}
+  .chip.ai{color:var(--purple);background:rgba(191,90,242,.15);font-weight:700}
+  .chip.done{color:var(--green);background:rgba(48,209,88,.15)} .chip.err{color:var(--red);background:rgba(255,69,58,.15)} .chip.retry{color:var(--orange);background:rgba(255,159,10,.15)}
+  .empty{color:var(--mut);text-align:center;padding:40px 16px}
+  .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:rgba(18,18,20,.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:.5px solid var(--line);display:flex;justify-content:space-around;align-items:center;padding:6px 0 calc(6px + env(safe-area-inset-bottom))}
+  .tab{background:none;border:0;color:var(--mut);font:inherit;font-size:12px;display:flex;flex-direction:column;align-items:center;gap:2px;width:90px}
+  .tab svg{width:28px;height:28px}
+  .tab.on{color:var(--blue)}
+  .fab{width:62px;height:62px;border-radius:50%;background:var(--blue);border:0;color:#fff;display:grid;place-items:center;margin-top:-26px;box-shadow:0 6px 24px rgba(10,132,255,.45)}
+  .fab svg{width:30px;height:30px}
+  .media{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 16px}
+  .pane{position:relative;aspect-ratio:9/16;border-radius:18px;background:#111;overflow:hidden;display:grid;place-items:center;color:var(--mut);text-align:center;font-size:15px}
+  .pane video,.pane canvas,.pane img{width:100%;height:100%;object-fit:cover}
+  .pane .tag{position:absolute;left:10px;bottom:10px;background:rgba(0,0,0,.6);border-radius:99px;padding:4px 12px;color:#fff;font-size:15px}
+  .pick{border:1.5px dashed var(--line);cursor:pointer}
+  .strip{background:var(--card);border-radius:18px;margin:0 16px;padding:14px 16px}
+  .strip .h{display:flex;justify-content:space-between;font-weight:700}
+  .strip .h span{color:var(--mut);font-weight:400}
+  .film{position:relative;height:64px;margin-top:12px;border-radius:8px;display:flex;touch-action:none;background:#111}
+  .film canvas{height:100%;flex:1;min-width:0;object-fit:cover}
+  .handle{position:absolute;top:-6px;bottom:-6px;width:46px;border:4px solid #fff;border-radius:12px;pointer-events:none;background:#000}
+  .handle canvas{width:100%;height:100%;border-radius:7px;object-fit:cover;display:block}
+  .note{color:var(--mut);font-size:14px;text-align:center;margin:10px 24px}
+  .note a{color:var(--blue);cursor:pointer}
+  .durbar{background:var(--card);border-radius:14px;margin:12px 16px;padding:12px 16px;color:var(--mut);font-size:15px}
+  .durbar.bad{color:var(--orange)}
+  .cell{display:flex;align-items:center;gap:12px;padding:12px 16px;position:relative}
+  .cell+.cell::before{content:"";position:absolute;top:0;left:16px;right:0;border-top:.5px solid var(--line)}
+  .cell .grow{flex:1}
+  .mut{color:var(--mut)}
+  .accs{display:flex;gap:10px;overflow-x:auto;padding:2px 16px 4px;scrollbar-width:none}
+  .acc{flex:none;background:var(--card);border:2px solid transparent;border-radius:16px;padding:10px 12px;display:flex;align-items:center;gap:8px;cursor:pointer}
+  .acc .av{width:36px;height:36px}
+  .acc.on{border-color:var(--blue)}
+  input[type=text],input[type=password],input[type=datetime-local],textarea{width:100%;background:var(--card);color:var(--txt);border:0;border-radius:12px;padding:13px 14px;font:inherit;font-size:17px;outline:none}
+  textarea{min-height:120px;resize:vertical}
+  .fld{margin:0 16px}
+  .fld+.fld{margin-top:10px}
+  .sw{position:relative;width:51px;height:31px;flex:none}
+  .sw input{opacity:0;width:0;height:0}
+  .sw span{position:absolute;inset:0;background:#39393d;border-radius:99px;transition:.2s}
+  .sw span::after{content:"";position:absolute;left:2px;top:2px;width:27px;height:27px;border-radius:50%;background:#fff;transition:.2s}
+  .sw input:checked+span{background:var(--green)} .sw input:checked+span::after{transform:translateX(20px)}
+  .btn{display:block;width:calc(100% - 32px);margin:18px 16px 0;background:var(--blue);color:#fff;border:0;border-radius:14px;padding:15px;font:inherit;font-size:17px;font-weight:700}
+  .btn.gray{background:var(--card2)} .btn.red{background:transparent;color:var(--red);border:1px solid var(--red)}
+  .btn:disabled{opacity:.45}
+  .prog{height:4px;background:var(--card2);border-radius:9px;margin:10px 16px 0;overflow:hidden;display:none}
+  .prog i{display:block;height:100%;width:0;background:var(--blue);transition:width .3s}
+  .shade{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:40;display:none}
+  .sheet{position:fixed;left:0;right:0;bottom:0;max-width:640px;margin:auto;max-height:88vh;overflow:auto;background:#121214;border-radius:22px 22px 0 0;z-index:41;transform:translateY(105%);transition:transform .25s;padding:10px 0 calc(24px + env(safe-area-inset-bottom))}
+  .sheet.on{transform:none}
+  .grab{width:40px;height:5px;border-radius:9px;background:#48484a;margin:0 auto 14px}
+  .sh-head{display:flex;align-items:center;gap:14px;padding:0 16px}
+  .sh-head .av{width:64px;height:64px}
+  .sh-head b{font-size:26px}
+  .sh-sub{color:var(--mut);padding:4px 16px 0}
+  .capfull{white-space:pre-wrap;padding:14px 16px;font-size:16px}
+  .err-t{color:var(--red);font-size:14px}
+  a.lnk{color:var(--blue);text-decoration:none}
+  #toast{position:fixed;left:16px;right:16px;bottom:calc(100px + env(safe-area-inset-bottom));max-width:600px;margin:auto;background:#2c2c2e;border-radius:14px;padding:12px 16px;z-index:60;display:none;font-size:15px;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+  #toast.err{color:#ffb4ae} #toast.ok{color:#b8f5c6}
 </style>
 </head>
 <body>
-<header><h1>📮 AutoPost</h1><div class="row"><button class="sec" id="btnRefresh">รีเฟรช</button><button class="sec" id="btnSet">⚙︎</button></div></header>
-<main>
 
-<section id="setup" class="card">
-  <b>ตั้งค่าครั้งแรก</b>
-  <label>บัญชี GitHub</label><input id="owner" value="toeyking297-jpg" autocapitalize="off">
-  <label>ชื่อ repo</label><input id="repo" value="autopost" autocapitalize="off">
-  <label>GitHub token (Contents + Actions: อ่าน/เขียน) — เก็บไว้ในมือถือเครื่องนี้เท่านั้น</label><input id="token" type="password" autocapitalize="off">
-  <div class="row" style="margin-top:12px"><button id="btnSave">บันทึก</button><button class="sec" id="btnCheck">ตรวจกุญแจ/บัญชี</button></div>
-  <p class="meta" id="runInfo"></p>
+<!-- ====== คิว ====== -->
+<section class="scr on" id="scrQueue">
+  <div class="nav"><div class="bar"><b>คิวโพสต์</b><a id="btnRefresh">รีเฟรช</a></div><h1>คิวโพสต์</h1></div>
+  <div class="stats">
+    <div class="stat"><div class="ic" style="background:var(--green)">✓</div><div class="row"><span>โพสต์แล้ว</span><b id="nDone">0</b></div></div>
+    <div class="stat"><div class="ic" style="background:var(--red)">!</div><div class="row"><span>มีปัญหา</span><b id="nErr">0</b></div></div>
+  </div>
+  <div class="runbar"><span class="dot" id="runDot"></span><span id="runTxt">กำลังโหลด…</span><a id="btnRunNow">โพสต์ตอนนี้</a></div>
+  <div class="seg" id="seg"><button data-f="up" class="on">กำลังจะโพสต์</button><button data-f="done">โพสต์แล้ว</button><button data-f="all">ทั้งหมด</button></div>
+  <div id="list"></div>
 </section>
 
-<h2>➕ เพิ่มโพสต์</h2>
-<section class="card">
-  <label>บัญชี</label><select id="acc"></select>
-  <label>โพสต์ที่</label><div class="row" id="plats"></div>
-  <label>ไฟล์วิดีโอ (mp4 แนวตั้ง ไม่เกิน 70 MB)</label><input id="file" type="file" accept="video/mp4,video/*">
-  <label>หัวข้อ (ใช้กับ YouTube)</label><input id="title" maxlength="100">
-  <label>แคปชัน</label><textarea id="caption"></textarea>
-  <label>แฮชแท็ก <span id="tagCount" class="mut"></span></label><input id="tags" placeholder="#ตลก #การ์ตูน #ดูเพลิน #ขำ #reels" autocapitalize="off">
-  <label>เวลาโพสต์ (เวลาไทย)</label><input id="when" type="datetime-local">
-  <div class="row" style="margin-top:14px"><button id="btnQueue" class="grow">เข้าคิว</button><button id="btnNow" class="sec">โพสต์ทันที</button></div>
-  <div class="bar" id="bar"><i></i></div>
+<!-- ====== โพสต์ใหม่ ====== -->
+<section class="scr" id="scrNew">
+  <div class="nav"><div class="bar"><b>โพสต์ใหม่</b><a id="btnClear">ล้าง</a></div><h1>โพสต์ใหม่</h1></div>
+  <input type="file" id="file" accept="video/*" hidden>
+  <input type="file" id="coverFile" accept="image/*" hidden>
+  <div class="media">
+    <div class="pane pick" id="vidPane"><div>＋<br>เลือกวิดีโอ</div></div>
+    <div class="pane" id="framePane"><div>ภาพปก</div></div>
+  </div>
+  <div class="strip" id="stripBox" style="display:none">
+    <div class="h">ภาพปก · ลากเพื่อเลือกเฟรม <span id="frameT">0:00</span></div>
+    <div class="film" id="film"><div class="handle" id="handle"><canvas id="handleCv"></canvas></div></div>
+  </div>
+  <p class="note" id="coverNote" style="display:none"></p>
+  <div class="durbar" id="durbar" style="display:none"></div>
+
+  <div class="sec">โพสต์ไปที่</div>
+  <div class="accs" id="accs"></div>
+  <div class="group" id="platGroup" style="margin-top:10px"></div>
+
+  <div class="sec">หัวข้อ (YouTube)</div>
+  <div class="fld"><input type="text" id="title" maxlength="100" placeholder="หัวข้อคลิป"></div>
+  <div class="sec">แคปชัน</div>
+  <div class="fld"><textarea id="caption" placeholder="เขียนแคปชัน…"></textarea></div>
+  <div class="sec">แฮชแท็ก <span id="tagCount"></span></div>
+  <div class="fld"><input type="text" id="tags" placeholder="#ตลก #การ์ตูน #ดูเพลิน #ขำ #reels" autocapitalize="off"></div>
+
+  <div class="sec">รายละเอียด</div>
+  <div class="group">
+    <div class="cell"><span class="grow">สร้างจาก AI</span><label class="sw"><input type="checkbox" id="isAi" checked><span></span></label></div>
+    <div class="cell"><span class="grow">เวลาโพสต์</span><input type="datetime-local" id="when" style="width:auto;background:var(--card2);padding:7px 10px;font-size:16px"></div>
+  </div>
+  <button class="btn" id="btnQueue">เข้าคิว</button>
+  <button class="btn gray" id="btnNow">โพสต์ทันที</button>
+  <div class="prog" id="prog"><i></i></div>
 </section>
 
-<h2>⏳ รอโพสต์</h2><div id="upcoming"></div>
-<h2>✅ ล่าสุด</h2><div id="recent"></div>
-</main>
-<div id="msg"></div>
+<!-- ====== ตั้งค่า ====== -->
+<section class="scr" id="scrSet">
+  <div class="nav"><div class="bar"><b>ตั้งค่า</b></div><h1>ตั้งค่า</h1></div>
+  <div class="sec">เชื่อม GitHub</div>
+  <div class="fld"><input type="text" id="owner" placeholder="บัญชี GitHub" autocapitalize="off"></div>
+  <div class="fld"><input type="text" id="repo" placeholder="ชื่อ repo" autocapitalize="off"></div>
+  <div class="fld"><input type="password" id="token" placeholder="GitHub token" autocapitalize="off"></div>
+  <p class="note">token ต้องมีสิทธิ์ Contents + Actions (อ่าน/เขียน) ของ repo นี้ · เก็บไว้ในเครื่องนี้เท่านั้น</p>
+  <button class="btn" id="btnSave">บันทึก</button>
+  <div class="sec">บัญชีที่เชื่อมไว้</div>
+  <div class="group" id="accList"></div>
+  <button class="btn gray" id="btnCheck">ตรวจกุญแจ/บัญชี</button>
+  <p class="note" id="runInfo"></p>
+</section>
+
+<nav class="tabbar">
+  <button class="tab on" data-scr="scrQueue"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="5" width="18" height="3.2" rx="1.6"/><rect x="3" y="10.4" width="18" height="3.2" rx="1.6"/><rect x="3" y="15.8" width="18" height="3.2" rx="1.6"/></svg>คิว</button>
+  <button class="fab" data-scr="scrNew" aria-label="โพสต์ใหม่"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+  <button class="tab" data-scr="scrSet"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3.3h-4l-.4 2.6a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.6 7.6 0 0 0 0 2l-2.2 1.6 2 3.5 2.5-1a7.4 7.4 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.5zM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7z"/></svg>ตั้งค่า</button>
+</nav>
+
+<div class="shade" id="shade"></div>
+<div class="sheet" id="sheet"></div>
+<div id="toast"></div>
 
 <script>
 const $ = id => document.getElementById(id);
 const store = { get:(k,d)=>{try{return localStorage.getItem("ap_"+k)??d}catch(e){return d}}, set:(k,v)=>{try{localStorage.setItem("ap_"+k,v)}catch(e){}} };
 let cfg = { owner: store.get("owner","toeyking297-jpg"), repo: store.get("repo","autopost"), token: store.get("token","") };
-let ACC = [], Q = {items:[]}, QSHA = null;
+let ACC = [], Q = {items:[]}, filter = "up";
+const PAGES = () => `https://${cfg.owner}.github.io/${cfg.repo}/`;
 
-function toast(t, cls="", ms=4000){ const m=$("msg"); m.className=cls; m.innerHTML=t; m.style.display="block"; clearTimeout(m._t); if(ms) m._t=setTimeout(()=>m.style.display="none",ms); }
-const esc = s => String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function toast(t, cls="", ms=3500){ const m=$("toast"); m.className=cls; m.innerHTML=t; m.style.display="block"; clearTimeout(m._t); if(ms) m._t=setTimeout(()=>m.style.display="none",ms); }
+const esc = s => String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const b64dec = s => new TextDecoder().decode(Uint8Array.from(atob(s.replace(/\n/g,"")),c=>c.charCodeAt(0)));
-const b64enc = str => { const b=new TextEncoder().encode(str); let s=""; for(let i=0;i<b.length;i+=0x8000) s+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000)); return btoa(s); };
+function bytesB64(b){ let s=""; for(let i=0;i<b.length;i+=0x8000) s+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000)); return btoa(s); }
+const b64enc = str => bytesB64(new TextEncoder().encode(str));
+const mmss = t => `${Math.floor(t/60)}:${String(Math.floor(t%60)).padStart(2,"0")}`;
+const bkkNow = () => new Date(Date.now()+7*3600e3);
+const toLocalInput = d => d.toISOString().slice(0,16);
+const TZ = {timeZone:"Asia/Bangkok"};
+const fmtTime = iso => new Date(iso).toLocaleTimeString("th-TH",{...TZ,hour:"2-digit",minute:"2-digit"});
+const fmtDay = iso => new Date(iso).toLocaleDateString("th-TH",{...TZ,weekday:"long",day:"numeric",month:"short"});
+const fmtFull = iso => new Date(iso).toLocaleString("th-TH",{...TZ,day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"});
+const UP = s => ["pending","retry"].includes(s);
+const ST = {pending:"รอคิว",retry:"จะลองใหม่",done:"โพสต์แล้ว",partial:"ได้บางส่วน",error:"มีปัญหา"};
+const STC = {pending:"",retry:"retry",done:"done",partial:"err",error:"err"};
+const PL = {ig:{n:"Instagram",c:"ig",i:"◎"},youtube:{n:"YouTube",c:"yt",i:"▶"}};
+const RS = {pending:"รอ",done:"สำเร็จ",error:"ผิดพลาด"};
 
 async function api(path, opts={}){
   const r = await fetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}/${path}`, {...opts, headers:{Authorization:`Bearer ${cfg.token}`, Accept:"application/vnd.github+json", ...(opts.headers||{})}});
@@ -87,135 +219,261 @@ async function api(path, opts={}){
   return j;
 }
 async function getJson(path){ const j = await api(`contents/${path}?t=${Date.now()}`); return {data: JSON.parse(b64dec(j.content)), sha: j.sha}; }
+function avatar(a){
+  const ini = esc(((a&&a.name)||"?")[0]);
+  if(!(a&&a.avatar)) return `<div class="av">${ini}</div>`;
+  const src = a.avatar.startsWith("http") ? a.avatar : PAGES()+a.avatar;
+  return `<div class="av"><img src="${esc(src)}" alt="${ini}" onerror="this.replaceWith(this.alt)"></div>`;
+}
+
+document.querySelectorAll("[data-scr]").forEach(b=>b.onclick=()=>show(b.dataset.scr));
+function show(id){
+  document.querySelectorAll(".scr").forEach(s=>s.classList.toggle("on",s.id===id));
+  document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on",t.dataset.scr===id));
+  window.scrollTo(0,0);
+  if(id==="scrSet") lastRun();
+}
 
 async function load(){
-  if(!cfg.token){ $("setup").style.display="block"; return; }
+  if(!cfg.token){ show("scrSet"); toast("ใส่ GitHub token ก่อนครับ","",5000); return; }
   try{
     const [a,q] = await Promise.all([getJson("config/accounts.json"), getJson("queue/queue.json")]);
-    ACC = a.data.accounts; Q = q.data; QSHA = q.sha;
-    fillAccounts(); render(); lastRun();
-  }catch(e){ toast("โหลดไม่ได้: "+esc(e.message)+" — เช็ก token ในหน้าตั้งค่า","err",0); $("setup").style.display="block"; }
+    ACC = a.data.accounts; Q = q.data;
+    renderQueue(); if(!V.file) renderAccs(); renderAccList(); lastRun();
+  }catch(e){ toast("โหลดไม่ได้: "+esc(e.message)+" — เช็ก token ในหน้าตั้งค่า","err",0); show("scrSet"); }
 }
 
-function fillAccounts(){
-  const cur = $("acc").value || store.get("lastAcc","");
-  $("acc").innerHTML = ACC.map(a=>`<option value="${a.key}">${esc(a.name)}</option>`).join("");
-  if(cur && ACC.some(a=>a.key===cur)) $("acc").value = cur;
-  fillPlats();
+/* ---------- คิว ---------- */
+$("seg").onclick = e => { const b=e.target.closest("button"); if(!b) return; filter=b.dataset.f; [...$("seg").children].forEach(x=>x.classList.toggle("on",x===b)); renderQueue(); };
+function renderQueue(){
+  $("nDone").textContent = Q.items.filter(i=>i.status==="done").length;
+  $("nErr").textContent = Q.items.filter(i=>["error","partial"].includes(i.status)).length;
+  let items = Q.items.filter(i => filter==="up" ? UP(i.status) : filter==="done" ? !UP(i.status) : true);
+  items.sort((a,b)=> filter==="up" ? a.schedule_at.localeCompare(b.schedule_at) : b.schedule_at.localeCompare(a.schedule_at));
+  if(!items.length){ $("list").innerHTML = `<div class="empty">${filter==="up"?"ยังไม่มีคิว · กด ＋ เพื่อเพิ่มโพสต์":"ยังไม่มีรายการ"}</div>`; return; }
+  const groups = {}; items.forEach(i=>{ const d=fmtDay(i.schedule_at); (groups[d]=groups[d]||[]).push(i); });
+  $("list").innerHTML = Object.entries(groups).map(([d,arr])=>`<div class="day">${esc(d)}</div><div class="group">${arr.map(row).join("")}</div>`).join("");
 }
-function fillPlats(){
-  const a = ACC.find(x=>x.key===$("acc").value); if(!a) return;
-  const p = [];
-  if(a.ig) p.push(`<label class="chk"><input type="checkbox" value="ig" checked> Instagram Reels (+ เพจ FB)</label>`);
-  if(a.youtube) p.push(`<label class="chk"><input type="checkbox" value="youtube" checked> YouTube Shorts</label>`);
-  $("plats").innerHTML = p.join("");
-  $("when").value = toLocalInput(nextSlot(a));
-}
-function bkkNow(){ return new Date(Date.now()+7*3600e3); } // ใช้ getUTC* เป็นเวลาไทย
-function toLocalInput(d){ return d.toISOString().slice(0,16); }
-function nextSlot(a){
-  const slots = (a.slots||[]).slice().sort(); const now = bkkNow();
-  const taken = new Set(Q.items.filter(i=>i.account===a.key && ["pending","retry"].includes(i.status)).map(i=>i.schedule_at.slice(0,16)));
-  if(!slots.length) return new Date(now.getTime()+10*60e3);
-  for(let d=0; d<30; d++) for(const s of slots){
-    const [h,m]=s.split(":").map(Number);
-    const t=new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate()+d,h,m));
-    if(t>now && !taken.has(toLocalInput(t))) return t;
-  }
-  return now;
-}
-function fmt(iso){ const d=new Date(iso); return d.toLocaleString("th-TH",{timeZone:"Asia/Bangkok",weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}); }
-const ST = {pending:"รอโพสต์",retry:"จะลองใหม่",done:"โพสต์แล้ว",partial:"ได้บางส่วน",error:"ไม่สำเร็จ"};
-const PN = {ig:"IG",youtube:"YouTube"};
-
-function card(i){
+function row(i){
   const a = ACC.find(x=>x.key===i.account); const res=i.results||{};
-  const plats = (i.platforms||[]).map(p=>{ const r=res[p]; if(r&&r.url) return `<a href="${esc(r.url)}" target="_blank">${PN[p]} ↗</a>`; if(r&&r.status==="error") return `<span class="err" title="${esc(r.error)}">${PN[p]} ✗</span>`; return `<span class="mut">${PN[p]}</span>`; }).join(" · ");
-  const errs = Object.entries(res).filter(([,r])=>r.status==="error").map(([p,r])=>`<div class="meta err">${PN[p]}: ${esc(r.error)}</div>`).join("") + (i.error?`<div class="meta err">${esc(i.error)}</div>`:"");
-  const canDel = ["pending","retry"].includes(i.status);
-  return `<div class="card item"><div class="grow">
-    <div class="t">${fmt(i.schedule_at)} · ${esc(a?a.name:i.account)}</div>
-    <div class="meta"><span class="pill s-${i.status}">${ST[i.status]||i.status}</span> ${plats}</div>
-    <div class="cap">${esc(i.title?i.title+"\n":"")}${esc(i.caption)}</div>${errs}</div>
-    ${canDel?`<div style="display:flex;flex-direction:column;gap:6px"><button class="sec" onclick="postNow('${i.id}')">ตอนนี้</button><button class="red" onclick="delItem('${i.id}')">ลบ</button></div>`:""}
-  </div>`;
+  const first = ((i.title||"") + (i.title&&i.caption?" | ":"") + (i.caption||"")).split("\n")[0];
+  const pf = (i.platforms||[]).map(p=>`<span class="pf ${PL[p].c} ${res[p]&&res[p].status==="error"?"dim":""}">${PL[p].i}</span>`).join("");
+  return `<div class="it" data-id="${esc(i.id)}">${avatar(a)}<div class="body">
+    <div class="top"><b>${esc(a?a.name:i.account)}</b><span>${fmtTime(i.schedule_at)}</span></div>
+    <div class="cap">${esc(first)||"&nbsp;"}</div>
+    <div class="chips">${pf}<span class="chip ${STC[i.status]||""}">${ST[i.status]||esc(i.status)}</span>${i.ai?'<span class="chip ai">AI</span>':""}</div>
+  </div></div>`;
 }
-function render(){
-  const up = Q.items.filter(i=>["pending","retry"].includes(i.status)).sort((a,b)=>a.schedule_at.localeCompare(b.schedule_at));
-  const rec = Q.items.filter(i=>!["pending","retry"].includes(i.status)).sort((a,b)=>b.schedule_at.localeCompare(a.schedule_at)).slice(0,20);
-  $("upcoming").innerHTML = up.map(card).join("") || `<p class="card mut">ยังไม่มีคิว</p>`;
-  $("recent").innerHTML = rec.map(card).join("") || `<p class="card mut">ยังไม่มี</p>`;
+$("list").onclick = e => { const it=e.target.closest(".it"); if(it) openItem(it.dataset.id); };
+function openItem(id){
+  const i = Q.items.find(x=>x.id===id); if(!i) return; const a = ACC.find(x=>x.key===i.account); const res=i.results||{};
+  const plats = (i.platforms||[]).map(p=>{ const r=res[p]||{status:"pending"};
+    const right = r.url ? `<a class="lnk" href="${esc(r.url)}" target="_blank">เปิดโพสต์ ↗</a>` : `<span class="mut">${RS[r.status]||esc(r.status)}</span>`;
+    return `<div class="cell"><span class="pf ${PL[p].c}">${PL[p].i}</span><span class="grow">${PL[p].n}${r.error?`<div class="err-t">${esc(r.error)}</div>`:""}</span>${right}</div>`; }).join("");
+  const tags = (i.hashtags||[]).join("\n");
+  const cover = i.cover ? (i.cover.type==="image"?"รูปที่อัปโหลด":`เฟรม ${mmss((i.cover.offset_ms||0)/1000)}`) : "อัตโนมัติ";
+  $("sheet").innerHTML = `<div class="grab"></div>
+    <div class="sh-head">${avatar(a)}<b>${esc(a?a.name:i.account)}</b></div>
+    <div class="sh-sub">${fmtFull(i.schedule_at)} · ${ST[i.status]||esc(i.status)}</div>
+    <div class="sec">แพลตฟอร์ม</div><div class="group">${plats}</div>
+    ${i.title?`<div class="sec">หัวข้อ</div><div class="group"><div class="capfull">${esc(i.title)}</div></div>`:""}
+    <div class="sec">แคปชั่น</div><div class="group"><div class="capfull">${esc(i.caption)}${tags?"\n\n"+esc(tags):""}</div></div>
+    <div class="sec">รายละเอียด</div><div class="group">
+      <div class="cell"><span class="grow">สร้างจาก AI</span><span class="mut">${i.ai?"ใช่":"ไม่ใช่"}</span></div>
+      <div class="cell"><span class="grow">ภาพปก</span><span class="mut">${cover}</span></div>
+      ${i.duration?`<div class="cell"><span class="grow">ความยาว</span><span class="mut">${mmss(i.duration)} นาที</span></div>`:""}
+      ${i.error?`<div class="cell"><span class="err-t">${esc(i.error)}</span></div>`:""}
+    </div>
+    ${UP(i.status)?`<button class="btn" id="shNow">โพสต์ตอนนี้</button><button class="btn red" id="shDel">ลบออกจากคิว</button>`:""}`;
+  if(UP(i.status)){ $("shNow").onclick=()=>postNow(i.id); $("shDel").onclick=()=>delItem(i.id); }
+  $("shade").style.display="block"; requestAnimationFrame(()=>$("sheet").classList.add("on"));
 }
+function closeSheet(){ $("sheet").classList.remove("on"); setTimeout(()=>$("shade").style.display="none",250); }
+$("shade").onclick = closeSheet;
+(()=>{ let y0=null; const s=$("sheet"); s.addEventListener("touchstart",e=>{ y0 = s.scrollTop<=0 ? e.touches[0].clientY : null; },{passive:true}); s.addEventListener("touchend",e=>{ if(y0!==null && e.changedTouches[0].clientY-y0>90) closeSheet(); y0=null; }); })();
 
 async function saveQueue(mutate, msg){
   for(let n=0;n<5;n++){
-    const q = await getJson("queue/queue.json"); Q=q.data; QSHA=q.sha;
+    const q = await getJson("queue/queue.json"); Q=q.data;
     mutate(Q);
-    try{
-      await api("contents/queue/queue.json",{method:"PUT",body:JSON.stringify({message:msg,content:b64enc(JSON.stringify(Q,null,2)+"\n"),sha:QSHA})});
-      render(); return;
-    }catch(e){ if(e.status!==409 && e.status!==422) throw e; await new Promise(r=>setTimeout(r,1500)); }
+    try{ await api("contents/queue/queue.json",{method:"PUT",body:JSON.stringify({message:msg,content:b64enc(JSON.stringify(Q,null,2)+"\n"),sha:q.sha})}); renderQueue(); return; }
+    catch(e){ if(e.status!==409 && e.status!==422) throw e; await new Promise(r=>setTimeout(r,1500)); }
   }
-  throw new Error("บันทึกคิวไม่ได้ (มีคนแก้พร้อมกัน) ลองอีกครั้ง");
+  throw new Error("บันทึกคิวไม่ได้ (มีการแก้พร้อมกัน) ลองใหม่อีกครั้ง");
 }
-function readFileB64(f){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result.split(",")[1]); r.onerror=rej; r.readAsDataURL(f); }); }
-function tagsList(){ return $("tags").value.replace(/,/g," ").split(/\s+/).filter(Boolean).map(t=>t.startsWith("#")?t:"#"+t); }
-$("tags").oninput = ()=>{ const n=tagsList().length; $("tagCount").textContent=`(${n}/5)`; $("tagCount").className = n===5?"ok":"err"; };
-
-async function addPost(now){
-  const a = ACC.find(x=>x.key===$("acc").value); const f=$("file").files[0];
-  const plats = [...$("plats").querySelectorAll("input:checked")].map(x=>x.value);
-  if(!f) return toast("เลือกไฟล์วิดีโอก่อน","err");
-  if(f.size>70*1024*1024) return toast("ไฟล์ใหญ่เกิน 70 MB","err");
-  if(!plats.length) return toast("เลือกที่โพสต์อย่างน้อย 1 ที่","err");
-  const tags = tagsList();
-  if(tags.length!==5 && !confirm(`แฮชแท็กมี ${tags.length} อัน (ปกติใช้ 5) จะเข้าคิวต่อไหม?`)) return;
-  const when = now ? toLocalInput(bkkNow()) : $("when").value;
-  if(!when) return toast("ใส่เวลาโพสต์","err");
-  const id = when.replace(/[-:]/g,"").replace("T","-") + "-" + a.key + "-" + Math.random().toString(16).slice(2,6);
-  const btns=[$("btnQueue"),$("btnNow")]; btns.forEach(b=>b.disabled=true);
-  const bar=$("bar"); bar.style.display="block"; bar.firstChild.style.width="15%";
-  try{
-    toast("กำลังอัปโหลดวิดีโอ… (อย่าปิดหน้านี้)","",0);
-    const b64 = await readFileB64(f); bar.firstChild.style.width="35%";
-    await api(`contents/media/${id}.mp4`,{method:"PUT",body:JSON.stringify({message:`AutoPost: เพิ่มวิดีโอ ${id}`,content:b64})});
-    bar.firstChild.style.width="80%";
-    await saveQueue(q=>q.items.push({id,account:a.key,platforms:plats,video:`media/${id}.mp4`,caption:$("caption").value.trim(),hashtags:tags,title:$("title").value.trim(),schedule_at:when+"+07:00",status:"pending",created_at:new Date().toISOString()}), `AutoPost: เข้าคิว ${id}`);
-    bar.firstChild.style.width="100%"; store.set("lastAcc",a.key);
-    if(now) await dispatch("post");
-    toast(now?"ส่งโพสต์แล้ว รอประมาณ 1–5 นาที":`เข้าคิวแล้ว: ${fmt(when+"+07:00")}`,"ok");
-    $("file").value=""; $("caption").value=""; $("title").value=""; fillPlats();
-  }catch(e){ toast("ไม่สำเร็จ: "+esc(e.message),"err",0); }
-  finally{ btns.forEach(b=>b.disabled=false); setTimeout(()=>{bar.style.display="none";bar.firstChild.style.width="0"},1500); }
-}
-async function dispatch(mode){ await api("actions/workflows/post.yml/dispatches",{method:"POST",body:JSON.stringify({ref:"main",inputs:{mode}})}); }
+async function dispatch(mode){ await api("actions/workflows/post.yml/dispatches",{method:"POST",body:JSON.stringify({ref:"main",inputs:{mode}})}); setTimeout(lastRun,6000); }
 async function postNow(id){
-  try{ await saveQueue(q=>{const i=q.items.find(x=>x.id===id); if(i) i.schedule_at=toLocalInput(bkkNow())+"+07:00";},`AutoPost: โพสต์ทันที ${id}`); await dispatch("post"); toast("ส่งโพสต์แล้ว รอประมาณ 1–5 นาที","ok"); }
+  try{ await saveQueue(q=>{const i=q.items.find(x=>x.id===id); if(i) i.schedule_at=toLocalInput(bkkNow())+"+07:00";},`AutoPost: โพสต์ทันที ${id}`); await dispatch("post"); closeSheet(); toast("ส่งโพสต์แล้ว รอประมาณ 1–5 นาที","ok"); }
   catch(e){ toast("ไม่สำเร็จ: "+esc(e.message),"err",0); }
 }
 async function delItem(id){
-  if(!confirm("ลบโพสต์นี้ออกจากคิว (และลบไฟล์วิดีโอ)?")) return;
+  if(!confirm("ลบโพสต์นี้ออกจากคิว?")) return;
   try{
-    const it = Q.items.find(x=>x.id===id);
     await saveQueue(q=>{q.items=q.items.filter(x=>x.id!==id)},`AutoPost: ลบ ${id}`);
-    if(it && it.video){ try{ const dir=await api(`contents/media?t=${Date.now()}`); const f=dir.find(x=>x.path===it.video); if(f) await api(`contents/${it.video}`,{method:"DELETE",body:JSON.stringify({message:`AutoPost: ลบวิดีโอ ${id}`,sha:f.sha})}); }catch(e){} }
-    toast("ลบแล้ว","ok");
+    closeSheet(); toast("ลบแล้ว","ok");
+    try{ const dir=await api(`contents/media?t=${Date.now()}`); for(const f of dir.filter(f=>f.name.startsWith(id))) await api(`contents/${f.path}`,{method:"DELETE",body:JSON.stringify({message:`AutoPost: ลบไฟล์ ${f.name}`,sha:f.sha})}); }catch(e){}
   }catch(e){ toast("ลบไม่ได้: "+esc(e.message),"err",0); }
 }
 async function lastRun(){
-  try{ const r=await api("actions/workflows/post.yml/runs?per_page=1"); const x=r.workflow_runs&&r.workflow_runs[0];
-    $("runInfo").innerHTML = x?`รอบล่าสุด: ${fmt(x.created_at)} · ${x.conclusion||x.status} · <a href="${x.html_url}" target="_blank">ดูรายละเอียด</a>`:"ยังไม่เคยรัน"; }catch(e){}
+  try{
+    const r=await api("actions/workflows/post.yml/runs?per_page=1"); const x=r.workflow_runs&&r.workflow_runs[0];
+    if(!x){ $("runTxt").textContent="ยังไม่เคยทำงาน"; return; }
+    const t = new Date(x.updated_at).toLocaleString("th-TH",{...TZ,day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});
+    const running = x.status!=="completed", ok = x.conclusion==="success";
+    $("runDot").style.background = running?"var(--orange)":ok?"var(--green)":"var(--red)";
+    $("runTxt").textContent = running?`กำลังทำงาน… (${t})`:ok?`ทำงานล่าสุด ${t}`:`รอบล่าสุดมีปัญหา (${t})`;
+    $("runInfo").innerHTML = `รอบล่าสุด: ${t} · ${running?"กำลังทำงาน":esc(x.conclusion)} · <a class="lnk" href="${esc(x.html_url)}" target="_blank">ดูรายละเอียด</a>`;
+  }catch(e){ $("runTxt").textContent="ดูสถานะไม่ได้"; }
+}
+$("btnRunNow").onclick = async()=>{ try{ await dispatch("post"); toast("สั่งให้ระบบโพสต์รายการที่ถึงเวลาแล้ว","ok"); }catch(e){ toast("สั่งไม่ได้: "+esc(e.message),"err",0); } };
+$("btnRefresh").onclick = load;
+
+/* ---------- โพสต์ใหม่ ---------- */
+const blankV = () => ({file:null,url:null,video:null,dur:0,w:0,h:0,t:0,coverBlob:null,coverType:"frame"});
+let V = blankV();
+let selAcc = store.get("lastAcc","");
+function renderAccs(){
+  if(!ACC.find(a=>a.key===selAcc)) selAcc = ACC[0]?ACC[0].key:"";
+  $("accs").innerHTML = ACC.map(a=>`<div class="acc ${a.key===selAcc?"on":""}" data-k="${esc(a.key)}">${avatar(a)}<b style="font-size:15px">${esc(a.name)}</b></div>`).join("");
+  const a = ACC.find(x=>x.key===selAcc); if(!a) return;
+  const cells=[];
+  if(a.ig) cells.push(`<div class="cell"><span class="pf ig">◎</span><span class="grow">Instagram Reels<div class="mut" style="font-size:13px">แชร์ไปเพจ Facebook อัตโนมัติ</div></span><label class="sw"><input type="checkbox" value="ig" checked><span></span></label></div>`);
+  if(a.youtube) cells.push(`<div class="cell"><span class="pf yt">▶</span><span class="grow">YouTube Shorts</span><label class="sw"><input type="checkbox" value="youtube" checked><span></span></label></div>`);
+  $("platGroup").innerHTML = cells.join("");
+  $("when").value = toLocalInput(nextSlot(a));
+}
+$("accs").onclick = e => { const c=e.target.closest(".acc"); if(!c) return; selAcc=c.dataset.k; store.set("lastAcc",selAcc); renderAccs(); };
+function nextSlot(a){
+  const slots=(a.slots||[]).slice().sort(), now=bkkNow();
+  const taken=new Set(Q.items.filter(i=>i.account===a.key&&UP(i.status)).map(i=>i.schedule_at.slice(0,16)));
+  if(!slots.length) return new Date(now.getTime()+10*60e3);
+  for(let d=0;d<30;d++) for(const s of slots){ const [h,m]=s.split(":").map(Number); const t=new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate()+d,h,m)); if(t>now&&!taken.has(toLocalInput(t))) return t; }
+  return now;
+}
+function tagsList(){ return $("tags").value.replace(/,/g," ").split(/\s+/).filter(Boolean).map(t=>t.startsWith("#")?t:"#"+t); }
+$("tags").oninput=()=>{ const n=tagsList().length; $("tagCount").textContent=`(${n}/5)`; $("tagCount").style.color=n===5?"var(--green)":"var(--orange)"; };
+
+$("vidPane").onclick=()=>{ if(!V.file) $("file").click(); };
+$("file").onchange=async e=>{ const f=e.target.files[0]; if(f) await loadVideo(f).catch(err=>toast(esc(err.message),"err")); };
+$("coverFile").onchange=e=>{ const f=e.target.files[0]; if(!f) return; V.coverBlob=f; V.coverType="image"; $("framePane").innerHTML=`<img src="${URL.createObjectURL(f)}"><span class="tag">รูปที่อัปโหลด</span>`; coverNote(); };
+$("coverNote").onclick = e => { const a=e.target.closest("a"); if(!a) return; if(a.dataset.act==="img") $("coverFile").click(); else { V.coverType="frame"; V.coverBlob=null; $("coverFile").value=""; coverNote(); drawFrame(); } };
+function coverNote(){
+  $("coverNote").innerHTML = V.coverType==="image"
+    ? `ใช้รูปที่อัปโหลดเป็นปก · <a data-act="frame">กลับไปใช้เฟรม</a>`
+    : `เฟรมที่เลือกจะเป็นปกทั้ง IG, YouTube และ Facebook · <a data-act="img">อัปโหลดรูปแทน</a>`;
 }
 
-$("acc").onchange=fillPlats;
+async function loadVideo(f){
+  if(V.url) URL.revokeObjectURL(V.url);
+  V = blankV(); V.file=f; V.url=URL.createObjectURL(f);
+  const v=document.createElement("video"); v.src=V.url; v.muted=true; v.playsInline=true; v.setAttribute("playsinline",""); v.preload="auto"; V.video=v;
+  await new Promise((res,rej)=>{ v.onloadedmetadata=res; v.onerror=()=>rej(new Error("เปิดไฟล์วิดีโอไม่ได้")); });
+  V.dur=v.duration; V.w=v.videoWidth; V.h=v.videoHeight;
+  const pv=document.createElement("video"); pv.src=V.url; pv.muted=true; pv.playsInline=true; pv.setAttribute("playsinline",""); pv.controls=true; pv.preload="metadata";
+  $("vidPane").innerHTML=""; $("vidPane").appendChild(pv); $("vidPane").insertAdjacentHTML("beforeend",`<span class="tag">${(f.size/1048576).toFixed(1)} MB</span>`); $("vidPane").classList.remove("pick");
+  const d=$("durbar"); d.style.display="block"; const vertical = V.h>V.w;
+  if(V.dur<=90 && vertical){ d.className="durbar"; d.textContent=`⏱️ ความยาว ${mmss(V.dur)} นาที · ออกเป็น Reels/Shorts ครบ`; }
+  else if(V.dur<=180 && vertical){ d.className="durbar"; d.textContent=`⏱️ ความยาว ${mmss(V.dur)} นาที · YouTube เป็น Shorts · IG เป็น Reels`; }
+  else { d.className="durbar bad"; d.textContent=`⚠️ ความยาว ${mmss(V.dur)} นาที${vertical?"":" · ไม่ใช่แนวตั้ง"} · อาจไม่ขึ้นเป็น Shorts`; }
+  if(f.size>70*1048576) toast("ไฟล์ใหญ่เกิน 70 MB อัปโหลดไม่ได้ ลองบีบไฟล์ก่อน","err",0);
+  $("stripBox").style.display="block"; $("coverNote").style.display="block"; coverNote();
+  await buildFilm();
+  await setFrame(V.dur*0.25);
+}
+function seek(v,t){ return new Promise(r=>{ const done=()=>{v.removeEventListener("seeked",done);r();}; v.addEventListener("seeked",done); v.currentTime=Math.min(Math.max(t,0),Math.max(V.dur-0.05,0)); }); }
+async function buildFilm(){
+  const film=$("film"); film.querySelectorAll(":scope > canvas").forEach(c=>c.remove());
+  const n=8, h=64, w=Math.round(h*V.w/V.h)||36;
+  for(let k=0;k<n;k++){ await seek(V.video, V.dur*(k+0.5)/n); const c=document.createElement("canvas"); c.width=w*2; c.height=h*2; c.getContext("2d").drawImage(V.video,0,0,c.width,c.height); film.insertBefore(c,$("handle")); }
+}
+let frameBusy=false, framePending=null;
+async function setFrame(t){
+  V.t=Math.max(0,Math.min(t,V.dur)); $("frameT").textContent=mmss(V.t);
+  const film=$("film"), hd=$("handle"), W=film.clientWidth, hw=hd.offsetWidth;
+  hd.style.left = Math.max(0,Math.min(W-hw,(V.t/V.dur)*W-hw/2))+"px";
+  if(frameBusy){ framePending=V.t; return; }
+  frameBusy=true; await seek(V.video,V.t); drawFrame(); frameBusy=false;
+  if(framePending!==null){ const p=framePending; framePending=null; setFrame(p); }
+}
+function drawFrame(){
+  if(!V.video) return;
+  const hc=$("handleCv"); hc.width=92; hc.height=Math.round(92*V.h/V.w); hc.getContext("2d").drawImage(V.video,0,0,hc.width,hc.height);
+  if(V.coverType!=="frame") return;
+  const c=document.createElement("canvas"); c.width=V.w; c.height=V.h; c.getContext("2d").drawImage(V.video,0,0);
+  $("framePane").innerHTML=""; $("framePane").appendChild(c);
+  $("framePane").insertAdjacentHTML("beforeend",`<span class="tag">เฟรม ${mmss(V.t)}</span>`);
+}
+(()=>{ const film=$("film"); let drag=false;
+  const at = x => { const r=film.getBoundingClientRect(); return Math.max(0,Math.min(1,(x-r.left)/r.width))*V.dur; };
+  film.addEventListener("pointerdown",e=>{ if(!V.dur) return; drag=true; film.setPointerCapture(e.pointerId); setFrame(at(e.clientX)); });
+  film.addEventListener("pointermove",e=>{ if(drag) setFrame(at(e.clientX)); });
+  film.addEventListener("pointerup",()=>drag=false); film.addEventListener("pointercancel",()=>drag=false);
+})();
+function coverJpeg(){
+  return new Promise(res=>{
+    if(V.coverType==="image" && V.coverBlob){
+      const img=new Image(); img.onerror=()=>res(null);
+      img.onload=()=>{ const c=document.createElement("canvas"); const s=Math.min(1,1920/Math.max(img.width,img.height)); c.width=Math.round(img.width*s); c.height=Math.round(img.height*s); c.getContext("2d").drawImage(img,0,0,c.width,c.height); c.toBlob(res,"image/jpeg",0.9); };
+      img.src=URL.createObjectURL(V.coverBlob); return;
+    }
+    const c=$("framePane").querySelector("canvas"); if(!c) return res(null);
+    c.toBlob(res,"image/jpeg",0.9);
+  });
+}
+const blobB64 = b => b.arrayBuffer().then(a=>bytesB64(new Uint8Array(a)));
+function prog(p){ const b=$("prog"); b.style.display=p===null?"none":"block"; b.firstElementChild.style.width=(p||0)+"%"; }
+
+async function addPost(now){
+  const a=ACC.find(x=>x.key===selAcc); const f=V.file;
+  const plats=[...$("platGroup").querySelectorAll("input:checked")].map(x=>x.value);
+  if(!a) return toast("ยังโหลดบัญชีไม่ได้ เช็กหน้าตั้งค่า","err");
+  if(!f) return toast("เลือกวิดีโอก่อน","err");
+  if(f.size>70*1048576) return toast("ไฟล์ใหญ่เกิน 70 MB","err");
+  if(!plats.length) return toast("เลือกที่โพสต์อย่างน้อย 1 ที่","err");
+  const tags=tagsList();
+  if(tags.length!==5 && !confirm(`แฮชแท็กมี ${tags.length} อัน (ปกติใช้ 5) เข้าคิวต่อไหม?`)) return;
+  const when = now ? toLocalInput(bkkNow()) : $("when").value;
+  if(!when) return toast("ใส่เวลาโพสต์","err");
+  const id = when.replace(/[-:]/g,"").replace("T","-")+"-"+a.key+"-"+Math.random().toString(16).slice(2,6);
+  const btns=[$("btnQueue"),$("btnNow")]; btns.forEach(b=>b.disabled=true);
+  try{
+    toast("กำลังอัปโหลด… อย่าปิดหน้านี้","",0); prog(8);
+    const cov = await coverJpeg(); let cover=null;
+    if(cov){ await api(`contents/media/${id}.jpg`,{method:"PUT",body:JSON.stringify({message:`AutoPost: ปก ${id}`,content:await blobB64(cov)})});
+      cover = {type:V.coverType, image:`media/${id}.jpg`}; if(V.coverType==="frame") cover.offset_ms=Math.round(V.t*1000); }
+    prog(25);
+    const b64 = await blobB64(f); prog(45);
+    await api(`contents/media/${id}.mp4`,{method:"PUT",body:JSON.stringify({message:`AutoPost: วิดีโอ ${id}`,content:b64})}); prog(85);
+    await saveQueue(q=>q.items.push({id,account:a.key,platforms:plats,video:`media/${id}.mp4`,cover,caption:$("caption").value.trim(),hashtags:tags,title:$("title").value.trim(),ai:$("isAi").checked,duration:Math.round(V.dur),schedule_at:when+"+07:00",status:"pending",created_at:new Date().toISOString()}),`AutoPost: เข้าคิว ${id}`);
+    prog(100);
+    if(now) await dispatch("post");
+    toast(now?"ส่งโพสต์แล้ว รอประมาณ 1–5 นาที":`เข้าคิวแล้ว · ${fmtDay(when+"+07:00")} ${fmtTime(when+"+07:00")}`,"ok");
+    clearNew(); show("scrQueue");
+  }catch(e){ toast("ไม่สำเร็จ: "+esc(e.message),"err",0); }
+  finally{ btns.forEach(b=>b.disabled=false); setTimeout(()=>prog(null),1200); }
+}
+function clearNew(){
+  if(V.url) URL.revokeObjectURL(V.url);
+  V=blankV();
+  $("file").value=""; $("coverFile").value=""; $("caption").value=""; $("title").value=""; $("tags").value=""; $("tagCount").textContent=""; $("isAi").checked=true;
+  $("vidPane").innerHTML="<div>＋<br>เลือกวิดีโอ</div>"; $("vidPane").classList.add("pick");
+  $("framePane").innerHTML="<div>ภาพปก</div>"; $("stripBox").style.display="none"; $("coverNote").style.display="none"; $("durbar").style.display="none";
+  $("film").querySelectorAll(":scope > canvas").forEach(c=>c.remove());
+  renderAccs();
+}
+$("btnClear").onclick=clearNew;
 $("btnQueue").onclick=()=>addPost(false);
 $("btnNow").onclick=()=>addPost(true);
-$("btnRefresh").onclick=load;
-$("btnSet").onclick=()=>{ const s=$("setup"); s.style.display=s.style.display==="block"?"none":"block"; lastRun(); };
-$("btnSave").onclick=()=>{ cfg={owner:$("owner").value.trim(),repo:$("repo").value.trim(),token:$("token").value.trim()}; Object.entries(cfg).forEach(([k,v])=>store.set(k,v)); $("setup").style.display="none"; load(); };
-$("btnCheck").onclick=async()=>{ try{ await dispatch("check"); toast("สั่งตรวจแล้ว รอ 1 นาทีแล้วกด 'ดูรายละเอียด'","ok"); setTimeout(lastRun,8000);}catch(e){toast("สั่งไม่ได้: "+esc(e.message),"err",0);} };
+
+/* ---------- ตั้งค่า ---------- */
+function renderAccList(){
+  $("accList").innerHTML = ACC.map(a=>`<div class="cell">${avatar(a)}<span class="grow"><b>${esc(a.name)}</b><div class="mut" style="font-size:14px">${[a.ig?"IG @"+esc(a.ig.username):"",a.youtube?"YouTube":""].filter(Boolean).join(" · ")}${a.slots?" · "+esc(a.slots.join(" / ")):""}</div></span></div>`).join("");
+}
+$("btnSave").onclick=()=>{ cfg={owner:$("owner").value.trim(),repo:$("repo").value.trim(),token:$("token").value.trim()}; Object.entries(cfg).forEach(([k,v])=>store.set(k,v)); toast("บันทึกแล้ว","ok"); show("scrQueue"); load(); };
+$("btnCheck").onclick=async()=>{ try{ await dispatch("check"); toast("สั่งตรวจแล้ว รอ 1–2 นาทีแล้วกด 'ดูรายละเอียด'","ok"); }catch(e){ toast("สั่งไม่ได้: "+esc(e.message),"err",0); } };
 $("owner").value=cfg.owner; $("repo").value=cfg.repo; $("token").value=cfg.token;
 load();
+setInterval(()=>{ if(document.visibilityState==="visible" && cfg.token && $("scrQueue").classList.contains("on")) load(); }, 60000);
 </script>
 </body>
 </html>

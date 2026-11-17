@@ -41,6 +41,8 @@ def main():
     ap.add_argument("--tags", default="")
     ap.add_argument("--title", default="")
     ap.add_argument("--platforms", default="")
+    ap.add_argument("--cover-sec", type=float, default=None, help="เฟรมที่ใช้เป็นปก (วินาที)")
+    ap.add_argument("--not-ai", action="store_true")
     a = ap.parse_args()
 
     accounts = {x["key"]: x for x in json.loads(ACCOUNTS.read_text(encoding="utf-8"))["accounts"]}
@@ -60,7 +62,8 @@ def main():
     shutil.copyfile(a.video, dest)
     q["items"].append({
         "id": pid, "account": a.account, "platforms": plats, "video": f"media/{pid}.mp4",
-        "caption": a.caption, "hashtags": tags, "title": a.title,
+        "caption": a.caption, "hashtags": tags, "title": a.title, "ai": not a.not_ai,
+        "cover": ({"type": "frame", "offset_ms": int(a.cover_sec * 1000)} if a.cover_sec is not None else None),
         "schedule_at": when.isoformat(timespec="minutes"), "status": "pending",
         "created_at": dt.datetime.now(TZ).isoformat(timespec="seconds"),
     })
